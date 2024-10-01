@@ -1,48 +1,41 @@
 // SPDX-License-Identifier: MIT
-// Compatible with OpenZeppelin Contracts ^5.0.0
-pragma solidity ^0.8.20;
+
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MyERC721Token is ERC721, ERC721Enumerable, Ownable {
+contract MyERC721Token is ERC721, Ownable, ERC721Holder {
     uint256 private etherPerToken;
-    uint256 private nextTokenId = 1; // Идентификатор для следующего токена
 
-    constructor(address initialOwner, uint256 _etherPerToken) ERC721("MyToken", "MTK") Ownable(initialOwner) {
+    constructor(address initialOwner, uint256 _etherPerToken) ERC721("MyERC721Token", "MTK") Ownable(initialOwner) {
         etherPerToken = _etherPerToken;
     }
 
-    // Функция для покупки токенов
-    function buyNFT() public payable {
-        require(msg.value >= etherPerToken, "Insufficient ETH sent");
+    /**
+     * @dev Function to buy a token with Ether.
+     * Transfers a token from the contract to the buyer if the correct amount is sent.
+     * The contract must own the tokens to sell them through this method.
+     */
+    function buy(uint256 tokenId) public payable {
+        require(msg.value >= etherPerToken, "Insufficient funds to buy the token");
+        require(ownerOf(tokenId) == address(this), "Token not available for sale"); // Make sure the contract owns the token
 
-        _mint(msg.sender, nextTokenId);
-        nextTokenId++;
+        // Transfer the token from the contract to the buyer
+        _safeTransfer(address(this), msg.sender, tokenId, "");
+
+        // Optional: If the user sends excess Ether, refund the difference
+        if (msg.value > etherPerToken) {
+            payable(msg.sender).transfer(msg.value - etherPerToken);
+        }
     }
 
-    // Функция для изменения курса покупки токенов
-    function setTokensPerEther(uint256 _etherPerToken) external onlyOwner {
-        require(_etherPerToken > 0, "Rate must be greater than zero");
-        etherPerToken = _etherPerToken;
-    }
-
-    // The following functions are overrides required by Solidity.
-
-    function _update(address to, uint256 tokenId, address auth)
-        internal
-        override(ERC721, ERC721Enumerable)
-        returns (address)
-    {
-        return super._update(to, tokenId, auth);
-    }
-
-    function _increaseBalance(address account, uint128 value) internal override(ERC721, ERC721Enumerable) {
-        super._increaseBalance(account, value);
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+    /**
+     * @dev Function to mint tokens.
+     * Only the owner can mint tokens, and they will be minted to the contract for later sale.
+     */
+    function mint(uint256 tokenId) public onlyOwner {
+        _safeMint(address(this), tokenId); // Mint token to the contract itself for sale
     }
 }

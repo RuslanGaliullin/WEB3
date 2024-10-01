@@ -1,94 +1,61 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
-import "forge-std/Test.sol";
-import "../src/MyERC721Token.sol"; // Путь к вашему контракту
+import "forge-std/Test.sol"; // Import Foundry's test framework
+import "../src/MyERC721Token.sol"; // Import your ERC721 contract
 
 contract MyERC721TokenTest is Test {
-    MyERC721Token private nftContract;
-    address private owner;
-    address private buyer;
-    address private nonOwner;
+    // Contract instance and test accounts
+    MyERC721Token public myERC721Token;
+    address public owner = address(1); // Owner of the contract
+    address public buyer = address(2); // Buyer address
 
-    uint256 constant ETHER_PER_NFT = 0.1 ether; // Цена за один NFT
+    uint256 public tokenPrice = 1 ether; // Set the price of the NFT
 
     function setUp() public {
-        // Инициализация
-        owner = address(this); // Этот контракт выступает владельцем
-        buyer = address(99); // покупатель
-        nonOwner = address(888); // не-владелец
+        // Give both the owner and buyer some ETH
+        vm.deal(owner, 10 ether); // Owner starts with 10 ether
+        vm.deal(buyer, 10 ether); // Buyer starts with 10 ether
 
-        // Создаем экземпляр контракта с ценой 0.1 эфир за NFT
-        nftContract = new MyERC721Token(owner, ETHER_PER_NFT);
+        // Deploy the MyERC721Token contract by "owner"
+        vm.prank(owner); // Set the next transaction as being sent from "owner"
+        myERC721Token = new MyERC721Token(owner, tokenPrice); // Setting the price to 1 Ether
     }
 
-    /// Тест покупки одного NFT
+    /// @notice Test the purchase of an NFT
     function testBuyNFT() public {
-        // Даем покупателю достаточно эфира для покупки
-        uint256 initialBuyerBalance = 1 ether; // Достаточно для покупки нескольких NFT
-        vm.deal(buyer, initialBuyerBalance);
+        // Mint an NFT (Token 1) and prepare the smart contract for sale
+        vm.prank(owner);
+        myERC721Token.mint(1); // The contract owns it
 
-        // Покупатель отправляет эфириум и покупает NFT
-        vm.startPrank(buyer); // Все последующие операции будут от имени покупателя
+        // Check the contract owns tokenId 1 before the purchase
+        assertEq(myERC721Token.ownerOf(1), address(myERC721Token));
 
-        nftContract.buyNFT{value: ETHER_PER_NFT}(); // Покупка 1 NFT за 0.1 эфира
+        // Buyer buys tokenId 1 (Token price is 1 ETH)
+        vm.prank(buyer); // Simulate the buyer calling the function
+        myERC721Token.buy{value: tokenPrice}(1); // Send 1 ETH to buy token 1
 
-        // Проверяем, что у покупателя теперь есть 1 NFT
-        assertEq(nftContract.balanceOf(buyer), 1);
-
-        // Проверяем, что ID токена 1 принадлежит покупателю
-        assertEq(nftContract.ownerOf(1), buyer);
+        // Check that the buyer owns the token after the transaction
+        assertEq(myERC721Token.ownerOf(1), buyer); // Buyer should own the token now
     }
 
-    /// Тест покупки нескольких NFT
-    function testBuyMultipleNFTs() public {
-        // Даем покупателю достаточно эфира
-        uint256 initialBuyerBalance = 1 ether;
-        vm.deal(buyer, initialBuyerBalance);
+    /// @notice Test that the owner can mint an NFT to the smart contract for sale
+    function testMintNFT() public {
+        vm.prank(owner); // Simulate the owner calling
+        myERC721Token.mint(1); // Mint tokenId 1 to the contract
 
-        // Покупаем 2 NFT
-        vm.startPrank(buyer);
-        nftContract.buyNFT{value: ETHER_PER_NFT}(); // Покупка первого NFT
-        nftContract.buyNFT{value: ETHER_PER_NFT}(); // Покупка второго NFT
-
-        // Баланс должен быть 2 NFT
-        assertEq(nftContract.balanceOf(buyer), 2);
-
-        // Проверяем владельцев токенов
-        assertEq(nftContract.ownerOf(1), buyer); // Первый токен
-        assertEq(nftContract.ownerOf(2), buyer); // Второй токен
+        // Check that the contract owns the token
+        assertEq(myERC721Token.ownerOf(1), address(myERC721Token)); // Assert the contract owns tokenId 1
     }
 
-    /// Тест на недостаточный эфир
-    function testBuyNFTFailsWithInsufficientETH() public {
-        // Даем покупателю немного эфира, меньше чем нужно
-        vm.deal(buyer, 0.05 ether); // Менее чем нужно на покупку одного
-        vm.startPrank(buyer);
+    /// @notice Test insufficient funds when buying an NFT
+    function testBuyWithLowEtherShouldFail() public {
+        // Mint an NFT (Token 1)
+        vm.prank(owner);
+        myERC721Token.mint(1);
 
-        // Попытка покупки без достаточного количества эфира должна завершиться неудачей
-        vm.expectRevert("Insufficient ETH sent");
-        nftContract.buyNFT{value: 0.05 ether}();
+        // Trying to buy a token with insufficient ether should fail
+        vm.prank(buyer);
+        vm.expectRevert(bytes("Insufficient funds to buy the token"));
+        myERC721Token.buy{value: 0.5 ether}(1); // Attempt to buy with only 0.5 ETH, should revert
     }
-
-    // /// Test only owner can withdraw
-    // function testOnlyOwnerCanWithdraw() public {
-    //     // 1. Buyer purchases NFT
-    //     vm.deal(buyer, 0.2 ether);  // Give buyer some funds to execute transactions
-    //     vm.prank(buyer);            // Set buyer as the msg.sender
-    //     nftContract.buyNFT{value: ETHER_PER_NFT}();
-
-    //     // 2. Contract now owns the ether: 
-    //     assertEq(nftContract.getContractEthBalance(), ETHER_PER_NFT);
-
-    //     // 3. Non-owner tries to withdraw, it reverts
-    //     vm.prank(nonOwner);          // Set `nonOwner` as msg.sender
-    //     vm.expectRevert(); // Expect revert message from OpenZeppelin
-    //     nftContract.withdraw();      // Should fail because non-owner is calling it
-
-    //     // 4. Owner successfully withdraws
-    //     vm.prank(owner);             // Set owner as msg.sender
-    //     nftContract.withdraw();      // Should succeed as the caller is the owner
-
-    //     assertEq(nftContract.getContractEthBalance(), 0);  // After withdraw, contract balance is 0
-    // }
 }

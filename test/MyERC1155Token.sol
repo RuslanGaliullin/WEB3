@@ -1,81 +1,65 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
-import "forge-std/Test.sol";
-import "../src/MyERC1155Token.sol"; // Убедитесь, что путь совпадает с именем вашего контракта
+import "forge-std/Test.sol"; // Import Foundry's test framework
+import "../src/MyERC1155Token.sol"; // Import your ERC721 contract
 
 contract MyERC1155TokenTest is Test {
-    MyERC1155Token private tokenContract;
-    address private owner;
-    address private buyer;
-    uint256 private constant TOKEN_ID = 1;
-    uint256 private constant ETHER_PER_TOKEN = 0.1 ether;
+    // Contract instance and test accounts
+    MyERC1155Token public myERC1155Token;
+    address public owner = address(1); // Owner of the contract
+    address public buyer = address(2); // Buyer address
+
+    uint256 public tokenPrice = 1 ether; // Set the price of the NFT
 
     function setUp() public {
-        owner = address(this); // Владелец является текущим контрактом в тестах.
-        buyer = address(99); // Покупателем выступает этот адрес.
+        // Give both the owner and buyer some ETH
+        vm.deal(owner, 10 ether); // Owner starts with 10 ether
+        vm.deal(buyer, 10 ether); // Buyer starts with 10 ether
 
-        tokenContract = new MyERC1155Token(owner, ETHER_PER_TOKEN);
+        // Deploy the myERC1155Token contract by "owner"
+        vm.prank(owner); // Set the next transaction as being sent from "owner"
+        myERC1155Token = new MyERC1155Token(owner, tokenPrice); // Setting the price to 1 Ether
 
-        // Проверяем, что токены минтятся для EOA (EOA может принимать ERC1155, без проверки интерфейса)
-        tokenContract.mint(owner, TOKEN_ID, 100, ""); // Владелец минтит 100 токенов на себя
+        // Моделируем передачу токенов на контракт, чтобы подготовить их к продаже (tokenId = 1)
+        // vm.prank(owner);
+        // myERC1155Token.setApprovalForAll(buyer, true); // Владелец одобряет контракт для использования токенов
     }
 
-    /// Тестируем успешную покупку токенов
-    function testSuccessfulBuy() public {
-        // Владелец пополняет контракт (переводит 50 токенов на контракт)
-        tokenContract.fundContract(50);
+    /// @notice Test the purchase of an NFT
+    function testBuyNFT() public {
+        // Mint an NFT (Token 1) and prepare the smart contract for sale
+        vm.prank(owner);
+        myERC1155Token.mint(1, 2 * 10 ** 18, ""); // The contract owns it
 
-        // Покупатель покупает 1 токен, отправив 0.1 Эфир
-        vm.deal(buyer, 0.2 ether); // Пополняем счет покупателя 0.2 эфиром
-        vm.prank(buyer); // Симулируем что следующие действия выполняет buyer
-        tokenContract.buy{value: ETHER_PER_TOKEN}(1); // Покупка 1 токена
+        // Check the contract owns tokenId 1 before the purchase
+        assertEq(myERC1155Token.balanceOf(address(myERC1155Token), 1), 2 * 10 ** 18);
 
-        // У покупателя теперь должно быть 1 токен
-        assertEq(tokenContract.balanceOf(buyer, TOKEN_ID), 1);
+        // Buyer buys tokenId 1 (Token price is 1 ETH)
+        vm.prank(buyer); // Simulate the buyer calling the function
+        myERC1155Token.buy{value: tokenPrice}(1, 1); // Send 1 ETH to buy token 1
 
-        // Проверяем, сколько токенов осталось на контракте (должно быть 49, т.к. было продано один токен)
-        assertEq(tokenContract.balanceOf(address(tokenContract), TOKEN_ID), 49);
+        // Check that the buyer owns the token after the transaction
+        assertEq(myERC1155Token.balanceOf(buyer, 1), 1); // Buyer should own the token now
     }
 
-    /// Тестируем неудачную покупку токенов при недостатке эфира
-    function testInsufficientEthBuy() public {
-        // Пополняем контракт 50 токенами
-        tokenContract.fundContract(50);
+    /// @notice Test that the owner can mint an NFT to the smart contract for sale
+    function testMintNFT() public {
+        vm.prank(owner); // Simulate the owner calling
+        myERC1155Token.mint(1, 100, ""); // The contract owns it
 
-        // Покупатель пытается купить один токен, не отправив достаточно эфира
-        vm.deal(buyer, 0.05 ether); // У покупателя 0.05 эфира (меньше, чем необходимо)
-        vm.prank(buyer); // Симулируем действия от имени buyer
-
-        // Ожидаем реорот ошибки "Insufficient ETH sent"
-        vm.expectRevert("Insufficient ETH sent");
-        tokenContract.buy{value: 0.05 ether}(1); // Попытка покупки должна провалиться
+        // Check that the contract owns the token
+        assertEq(myERC1155Token.balanceOf(address(myERC1155Token), 1), 100);
     }
 
-    /// Тестируем неудачную покупку, когда на контракте недостаточно токенов
-    function testNotEnoughTokensInContract() public {
-        // Пополняем контракт только 10 токенами, но пытаемся купить больше
-        tokenContract.fundContract(10);
+    /// @notice Test insufficient funds when buying an NFT
+    function testBuyWithLowEtherShouldFail() public {
+        // Mint an NFT (Token 1)
+        vm.prank(owner);
+        myERC1155Token.mint(1, 100, ""); // The contract owns it
 
-        vm.deal(buyer, 1 ether); // У покупателя хватает эфира для покупки
+        // Trying to buy a token with insufficient ether should fail
         vm.prank(buyer);
-
-        // Ожидание ошибки "Not enough tokens in contract"
-        vm.expectRevert("Not enough tokens in contract");
-        tokenContract.buy{value: ETHER_PER_TOKEN}(20); // Пометка: пытаемся купить больше токенов, чем на контракте
-    }
-
-    /// Тестируем пополнение контракта (владелец пополняет токенами)
-    function testFundContract() public {
-        // Владелец пополняет контракт на 50 токенов
-        uint256 initialOwnerBalance = tokenContract.balanceOf(owner, TOKEN_ID); // Баланс владельца до перевода
-
-        tokenContract.fundContract(50); // Переводим 50 токенов на контракт
-
-        // Проверьте баланс контракта (должен теперь содержать 50 токенов)
-        assertEq(tokenContract.balanceOf(address(tokenContract), TOKEN_ID), 50);
-
-        // Убедитесь, что баланс владельца уменьшился на 50 токенов
-        assertEq(tokenContract.balanceOf(owner, TOKEN_ID), initialOwnerBalance - 50);
+        vm.expectRevert(bytes("Insufficient funds to buy the tokens"));
+        myERC1155Token.buy{value: 0.5 ether}(1, 1); // Attempt to buy with only 0.5 ETH, should revert
     }
 }

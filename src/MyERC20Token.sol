@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MyERC20Token is ERC20, ERC20Permit, Ownable {
     uint256 private etherPerToken;
@@ -33,7 +32,6 @@ contract MyERC20Token is ERC20, ERC20Permit, Ownable {
 
         // Переводим токены покупателю
         _transfer(address(this), msg.sender, amountToBuy);
-        contractBalance = balanceOf(address(this));
     }
 
     // Функция для владельца, чтобы пополнить контракт токенами для продажи
