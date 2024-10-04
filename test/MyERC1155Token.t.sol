@@ -1,4 +1,5 @@
-pragma solidity ^0.8.9;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol"; // Import Foundry's test framework
 import "../src/MyERC1155Token.sol"; // Import your ERC721 contract
@@ -19,17 +20,13 @@ contract MyERC1155TokenTest is Test {
         // Deploy the myERC1155Token contract by "owner"
         vm.prank(owner); // Set the next transaction as being sent from "owner"
         myERC1155Token = new MyERC1155Token(owner, tokenPrice); // Setting the price to 1 Ether
-
-        // Моделируем передачу токенов на контракт, чтобы подготовить их к продаже (tokenId = 1)
-        // vm.prank(owner);
-        // myERC1155Token.setApprovalForAll(buyer, true); // Владелец одобряет контракт для использования токенов
     }
 
     /// @notice Test the purchase of an NFT
     function testBuyNFT() public {
         // Mint an NFT (Token 1) and prepare the smart contract for sale
         vm.prank(owner);
-        myERC1155Token.mint(1, 2 * 10 ** 18, ""); // The contract owns it
+        myERC1155Token.mint(address(myERC1155Token), 1, 2 * 10 ** 18, ""); // The contract owns it
 
         // Check the contract owns tokenId 1 before the purchase
         assertEq(myERC1155Token.balanceOf(address(myERC1155Token), 1), 2 * 10 ** 18);
@@ -45,7 +42,7 @@ contract MyERC1155TokenTest is Test {
     /// @notice Test that the owner can mint an NFT to the smart contract for sale
     function testMintNFT() public {
         vm.prank(owner); // Simulate the owner calling
-        myERC1155Token.mint(1, 100, ""); // The contract owns it
+        myERC1155Token.mint(address(myERC1155Token), 1, 100, ""); // The contract owns it
 
         // Check that the contract owns the token
         assertEq(myERC1155Token.balanceOf(address(myERC1155Token), 1), 100);
@@ -55,7 +52,7 @@ contract MyERC1155TokenTest is Test {
     function testBuyWithLowEtherShouldFail() public {
         // Mint an NFT (Token 1)
         vm.prank(owner);
-        myERC1155Token.mint(1, 100, ""); // The contract owns it
+        myERC1155Token.mint(address(myERC1155Token), 1, 100, ""); // The contract owns it
 
         // Trying to buy a token with insufficient ether should fail
         vm.prank(buyer);

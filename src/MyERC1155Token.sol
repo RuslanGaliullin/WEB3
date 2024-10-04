@@ -36,8 +36,15 @@ contract MyERC1155Token is ERC1155, Ownable, ERC1155Holder {
         _setURI(newuri);
     }
 
-    function mint(uint256 id, uint256 value, bytes memory data) external onlyOwner {
-        _mint(address(this), id, value, data);
+    function mint(address account, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
+        _mint(account, id, amount, data);
+    }
+
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        public
+        onlyOwner
+    {
+        _mintBatch(to, ids, amounts, data);
     }
 
     function supportsInterface(bytes4 interfaceId)

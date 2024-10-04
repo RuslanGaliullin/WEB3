@@ -1,4 +1,5 @@
-pragma solidity ^0.8.9;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol"; // Import Foundry's test framework
 import "../src/MyERC721Token.sol"; // Import your ERC721 contract
@@ -25,33 +26,33 @@ contract MyERC721TokenTest is Test {
     function testBuyNFT() public {
         // Mint an NFT (Token 1) and prepare the smart contract for sale
         vm.prank(owner);
-        myERC721Token.mint(1); // The contract owns it
+        myERC721Token.safeMint(address(myERC721Token), ""); // The contract owns it
 
         // Check the contract owns tokenId 1 before the purchase
-        assertEq(myERC721Token.ownerOf(1), address(myERC721Token));
+        assertEq(myERC721Token.ownerOf(0), address(myERC721Token));
 
         // Buyer buys tokenId 1 (Token price is 1 ETH)
         vm.prank(buyer); // Simulate the buyer calling the function
-        myERC721Token.buy{value: tokenPrice}(1); // Send 1 ETH to buy token 1
+        myERC721Token.buy{value: tokenPrice}(0); // Send 1 ETH to buy token 1
 
         // Check that the buyer owns the token after the transaction
-        assertEq(myERC721Token.ownerOf(1), buyer); // Buyer should own the token now
+        assertEq(myERC721Token.ownerOf(0), buyer); // Buyer should own the token now
     }
 
     /// @notice Test that the owner can mint an NFT to the smart contract for sale
     function testMintNFT() public {
         vm.prank(owner); // Simulate the owner calling
-        myERC721Token.mint(1); // Mint tokenId 1 to the contract
+        myERC721Token.safeMint(address(myERC721Token), ""); // Mint tokenId 1 to the contract
 
         // Check that the contract owns the token
-        assertEq(myERC721Token.ownerOf(1), address(myERC721Token)); // Assert the contract owns tokenId 1
+        assertEq(myERC721Token.ownerOf(0), address(myERC721Token)); // Assert the contract owns tokenId 1
     }
 
     /// @notice Test insufficient funds when buying an NFT
     function testBuyWithLowEtherShouldFail() public {
         // Mint an NFT (Token 1)
         vm.prank(owner);
-        myERC721Token.mint(1);
+        myERC721Token.safeMint(address(myERC721Token), "");
 
         // Trying to buy a token with insufficient ether should fail
         vm.prank(buyer);

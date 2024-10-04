@@ -2,5 +2,7 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+rpc_url = "https://goerli.infura.io/v3/${INFURA_API_KEY}"
+private_key = "${PRIVATE_KEY}"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
