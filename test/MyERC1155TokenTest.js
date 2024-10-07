@@ -57,9 +57,9 @@ describe("MyERC1155Token", function () {
 
     await expect(token.connect(addr1).buyNFT(addr1.address, mintCount, { value: totalPrice }))
       .to.emit(token, "TransferSingle")
-      .withArgs(addr1.address, addr1.address, addr1.address, NFT_ID + 1, mintCount);
+      .withArgs(addr1.address, "0x0000000000000000000000000000000000000000", addr1.address, NFT_ID, mintCount);
 
-    const addr1Balance = await token.balanceOf(addr1.address, NFT_ID + 1);
+    const addr1Balance = await token.balanceOf(addr1.address, NFT_ID);
     expect(addr1Balance).to.equal(mintCount);
   });
 
