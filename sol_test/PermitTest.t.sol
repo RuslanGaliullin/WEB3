@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol"; // Используем стандартные утилиты для тестов в Foundry
-import "../src/MyERC20Token.sol"; // Импортируем наш основной контракт для тестирования
+import "/home/rmg/hardhat-test/contracts/MyERC20Token.sol"; // Импортируем наш основной контракт для тестирования
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"; // Для работы с подписями
 
 contract MyERC20TokenPermitTest is Test {
