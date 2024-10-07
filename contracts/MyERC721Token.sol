@@ -15,7 +15,7 @@ contract MyERC721Token is ERC721, ERC721URIStorage, Ownable {
     uint256 private _PRICE = 1;
     uint256 public constant MAX_ELEMENTS = 7;
     string public baseTokenURI = 
-        "https://ipfs.io/ipfs/QmfGCCNUfTCd7thUP5FGd9AuvdRQ4MmNDcH13aGBbGAae9/";
+        "https://ipfs.io/ipfs/Qmd7GG4ecHVyEc3Lb2Ta68vYcQ8moUUpLhHWBwdu2fT45D/";
 
     /// @dev Эмитируется при создании нового токена (пингвина).
     event CreatePenguin(uint256 indexed id);

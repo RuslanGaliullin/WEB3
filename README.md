@@ -1,13 +1,50 @@
-# Sample Hardhat Project
+### Галиуллин Руслан
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+#### Структура
 
-Try running some of the following tasks:
+- В `ignition/modules/erc*_interact.js` лежат скрипты для теста написанных функций (покупки, перевода)
+- В `ignition/modules/MyERC*Token_deploy.js` лежат скрипты для деплоя каждого контракта
+- В `sol_test` тест на пермит, который я сделал на Foundry еще, но не успел перенести на hard hat
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
+#### Деплой
+Использовал тестовую сеть polygonAmoy. Все контракты создавались и тестировались с адреса `0x655453e2D0804390bbf410562060Ab8155ffC3A2`
+
+Команда, которой я деплоил контракты:
 ```
+npx hardhat ignition deploy ignition/modules/MyERC20Token_deploy.js --network polygonAmoy --verbose --verify --default-sender 0x655453e2D0804390bbf410562060Ab8155ffC3A2 --reset
+```
+Команда для запуска скриптов:
+```
+npx hardhat run ignition/modules/erc20_interact.js --network polygonAmoy --verbose
+```
+
+#### О контрактах
+- В ERC20 - есть `buy()`, который переводит токены из контракта 
+- В ERC721 - `mint()` пердставляет из себя нужный `buy()`, потому что минтятться NFT
+- В ERC1155 - `buy()` отвечает за покупку взаимозаменяемых токенов, `buyNFT()` за NFT
+
+Метаданные NFT лежат [здесь](https://ipfs.io/ipfs/Qmd7GG4ecHVyEc3Lb2Ta68vYcQ8moUUpLhHWBwdu2fT45D/) (там у всех ссылка на одну и ту же png картинку, но это не важно)
+
+Задеплоенные, верифицированные контракты: [ERC20](https://www.oklink.com/ru/amoy/address/0x746c68079fffd591362d76855e26db946b612a62), [ERC721](https://www.oklink.com/ru/amoy/address/0xaa8f2ef3Db6BCA9b721F045FdA60F5653B14b969), [ERC1155](https://www.oklink.com/ru/amoy/address/0x419521d220c36185565FBa1Eb57d04Bca1b9eEB6), 
+
+#### Ответы на вопросы
+
+1. Что такое функция approve и как она используется?
+
+Функция approve в стандартах токенов ERC20, ERC721 и ERC1155 позволяет владельцу токена разрешить другому адресу (например, смарт-контракту или стороннему пользователю) управлять определенным количеством его токенов
+
+2. В чем различие между ERC721 и ERC1155?
+
+ERC721: Это стандарт для незаменяемых токенов (NFT), где каждый токен уникален и имеет свой идентификатор.
+
+Каждый токен NFT уникален и может представлять что-то вроде цифрового искусства или коллекционного предмета.
+
+ERC1155: Это стандарт для многотокеновых активов, который поддерживает как заменяемые, так и незаменяемые токены. ERC1155 позволяет создавать несколько типов токенов в одном смарт-контракте.
+
+3. Что такое SBT (Soulbound Token)?
+
+Soulbound Tokens (SBT) — это токены, которые нельзя передавать между адресами, NFT, которые навсегда выдаются на 1 адрес и всегда к нему привязаны.
+
+4. Как можно сделать SBT токен?
+
+Сделать NFT, заблокировав функцию передачи токена после его создания.

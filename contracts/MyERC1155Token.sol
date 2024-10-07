@@ -33,7 +33,7 @@ contract MyERC1155Token is ERC1155, ERC1155URIStorage, ERC1155Holder, Ownable {
         uint256 _PRICE
     )
         ERC1155(
-            "https://ipfs.io/ipfs/QmfGCCNUfTCd7thUP5FGd9AuvdRQ4MmNDcH13aGBbGAae9/"
+            "https://ipfs.io/ipfs/Qmd7GG4ecHVyEc3Lb2Ta68vYcQ8moUUpLhHWBwdu2fT45D/"
         )
         Ownable(initialOwner)
     {

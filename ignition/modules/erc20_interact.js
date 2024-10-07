@@ -4,7 +4,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
 
   // Address of the already deployed contract
-  const contractAddress = "0x227dc4Cb13f539Ea47E7Db409DE365242Ba684bB";
+  const contractAddress = "0x746c68079fffd591362d76855e26db946b612a62";
 
   const Token = await ethers.getContractFactory("MyERC20Token");
   const token = Token.attach(contractAddress);
@@ -13,9 +13,9 @@ async function main() {
 
   // Now interact with the deployed contract
   // a. mint
-  const mintTx = await token.mint(deployer.address, 100);  // Mint 100 tokens to deployer's address
+  const mintTx = await token.mint(deployer.address, 200);  // Mint 200 tokens to deployer's address
   await mintTx.wait();
-  console.log(`Minted 100 tokens to ${deployer.address}`);
+  console.log(`Minted 200 tokens to ${deployer.address}`);
 
   // b. transfer
   const transferTx = await token.transfer("0xF9bD56EE66BdD4C3F4a82A1a45fF99b48A33A9c7", 50);  // Transfer 50 tokens to another address
@@ -29,8 +29,8 @@ async function main() {
   await transferFromTx.wait();
   console.log(`Transferred 50 tokens using transferFrom`);
 
-  // d. Buy (если есть функция покупки токенов)
-  const buyTx = await token.buy({ value: 10 });  // Покупка токенов за 100 wei
+  // d. Buy
+  const buyTx = await token.buy({ value: 10 });  // Покупка токенов за 10 wei
   await buyTx.wait();
   console.log(`Bought tokens`);
 

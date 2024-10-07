@@ -4,7 +4,7 @@ async function main() {
     const [deployer] = await ethers.getSigners();
 
     // Address of the already deployed contract
-    const contractAddress = "0x1B9C6007463B0f9bD2141D136cA62967293BEd81";
+    const contractAddress = "0x419521d220c36185565FBa1Eb57d04Bca1b9eEB6";
 
     const Token = await ethers.getContractFactory("MyERC1155Token");
     const token = Token.attach(contractAddress);
@@ -38,12 +38,12 @@ async function main() {
     const safeBatchTransferTx = await token.safeBatchTransferFrom(
         deployer.address,
         "0xF9bD56EE66BdD4C3F4a82A1a45fF99b48A33A9c7",  // Recipient address
-        [0, 1],  // Array of token IDs (e.g., TOKEN_ID = 1, NFT_ID = 2)
-        [5, 1],  // Array of amounts for each token ID (e.g., 10 of TOKEN_ID, 5 of NFT_ID)
+        [0, 1],  // Array of token IDs
+        [5, 1],  // Array of amounts for each token ID
         "0x"  // Additional data
     );
     await safeBatchTransferTx.wait();
-    console.log(`Transferred 5 tokens of type 1 and 1 tokens of type 2 using safeBatchTransferFrom`);
+    console.log(`Transferred 5 tokens of type 0 and 1 tokens of type 1 using safeBatchTransferFrom`);
 
 
 

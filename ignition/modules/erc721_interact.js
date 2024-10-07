@@ -4,7 +4,7 @@ async function main() {
     const [deployer] = await ethers.getSigners();
 
     // Address of the already deployed contract
-    const contractAddress = "0x93f6242bC587258B6fb935d8cE974b39B2aC63D6";
+    const contractAddress = "0xaa8f2ef3Db6BCA9b721F045FdA60F5653B14b969";
 
     const Token = await ethers.getContractFactory("MyERC721Token");
     const token = Token.attach(contractAddress);
@@ -13,7 +13,7 @@ async function main() {
 
     //   Now interact with the deployed contract
     // a. mint
-    const mintTx = await token.mint(deployer.address, 4, { value: 4 });  // Mint 2 tokens to deployer's address
+    const mintTx = await token.mint(deployer.address, 4, { value: 4 });  // Mint 4 tokens to deployer's address
     await mintTx.wait();
     console.log(`Minted 4 token to ${deployer.address}`);;
 

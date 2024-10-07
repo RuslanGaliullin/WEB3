@@ -9,22 +9,22 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
  * @dev ERC20 токен с функциями покупки, комиссии за перевод и управляемой минтинга.
  */
 contract MyERC20Token is ERC20Permit, Ownable {
-    uint256 private etherPerToken;
+    uint256 private PRICE;
     uint256 public transferFeePercentage; // процент комиссии за перевод
 
     /**
      * @dev Конструктор устанавливает владельца, стоимость токена в эфире и процент комиссии за перевод.
      * @param initialOwner Адрес начального владельца контракта.
-     * @param _etherPerToken Стоимость одного токена в эфирах.
+     * @param _PRICE Стоимость одного токена в эфирах.
      * @param _transferFeePercentage Процент комиссии за перевод токенов.
      */
-    constructor(address initialOwner, uint256 _etherPerToken, uint256 _transferFeePercentage)
+    constructor(address initialOwner, uint256 _PRICE, uint256 _transferFeePercentage)
         ERC20("MyToken", "MTK")
         Ownable(initialOwner)
         ERC20Permit("MyToken")
     {
         _mint(msg.sender, 100 * 10 ** decimals()); // Минт 100 токенов для владельца
-        etherPerToken = _etherPerToken;
+        PRICE = _PRICE;
         transferFeePercentage = _transferFeePercentage; // комиссия в %
     }
 
@@ -34,10 +34,10 @@ contract MyERC20Token is ERC20Permit, Ownable {
      * Требует, чтобы отправленная сумма была не меньше стоимости одного токена.
      */
     function buy() public payable {
-        require(msg.value >= etherPerToken, "Insufficient funds to buy tokens");
+        require(msg.value >= PRICE, "Insufficient funds to buy tokens");
 
         // Рассчитываем количество токенов, исходя из присланного эфира
-        uint256 amountToBuy = msg.value / etherPerToken;
+        uint256 amountToBuy = msg.value / PRICE;
 
         // Проверка, что у контракта достаточно токенов для продажи
         uint256 contractBalance = balanceOf(address(this));
