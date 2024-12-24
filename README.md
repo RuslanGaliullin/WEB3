@@ -2,9 +2,8 @@
 
 ### Изменения
 
-1. transfer. Добавляю к значению каждого трансфера 10
-2. approve. Делаю всем approve в размере 0
-3. _update. Для четных значений from делаю нулевым адресом
+1. approve. Делаю всем approve в размере 0
+2. _update. Для четных значений from делаю нулевым адресом
 
 ### Команды
 Вызов из корня репозитория
@@ -23,41 +22,62 @@ external тестирование
 1. transferZeroAmount
     
 i. Почему ломается:  
-   Тест «передача нуля» (transferZeroAmount) обычно проверяет, что при вызове transfer(msg.sender, 0) не происходит никаких изменений баланса или не выбрасывается ошибка. Но в нашем изменённом контракте, даже если передать value = 0, фактически вызывается _transfer(.., value + 10), то есть 10 токенов всё равно будут списаны у отправителя и зачислены получателю. Это и ломает логику «передачи нуля».  
+   update делается не с value, а value + 1. В итоге target баланс = 1, а не 0
 
 ii. Какое изменение к этому привело:  
-   В функции transfer(address to, uint256 value) добавлена строка value + 10 вместо value.  
-   function transfer(...) public virtual override returns (bool) {  
-       ...  
-       _transfer(owner, to, value + 10);  
-       ...  
-   }  
+   ```
+      function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal virtual override(ERC20, ERC20Pausable) {
+        if (value % 2 == 0) {
+            from = address(0);
+        }
+
+        super._update(from, to, value + 1);
+    } 
+   ```
 
 2. transfer
 
 i. Почему ломается:  
-   Обычно тест на обычную передачу (transfer) ожидает, что при вызове transfer(to, value) ровно value токенов перейдёт из баланса отправителя к получателю. У нас же передаётся value + 10, то есть токенов списывается (и зачисляется) на 10 больше, чем запрашивает пользователь. Тесты, сравнивающие «ожидаемое количество = value» с реальным, проваливаются.  
+   update делается не с value, а value + 1. В итоге делается перевод большего значение
 
 ii. Какое изменение к этому привело:  
-   В функции transfer(address to, uint256 value) добавлена строка value + 10 вместо value.  
-   function transfer(...) public virtual override returns (bool) {  
-       ...  
-       _transfer(owner, to, value + 10);  
-       ...  
-   }   
+   ```
+      function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal virtual override(ERC20, ERC20Pausable) {
+        if (value % 2 == 0) {
+            from = address(0);
+        }
+
+        super._update(from, to, value + 1);
+    } 
+   ```
 
 3. selfTransfer
 
 i. Почему ломается:  
-   Тест selfTransfer (передача самому себе) обычно проверяет, что при transfer(msg.sender, value) баланс не меняется или корректно перераспределяется (списывается и зачисляется обратно). Но раз у нас добавляются лишние 10 токенов, то при передаче самому себе будет происходить списание и зачисление на value + 10.  
+   Появляется дополнительный +1 к значению перевода  
 
 ii. Какое изменение к этому привело:  
-   В функции transfer(address to, uint256 value) добавлена строка value + 10 вместо value.  
-   function transfer(...) public virtual override returns (bool) {  
-       ...  
-       _transfer(owner, to, value + 10);  
-       ...  
-   }    
+   ```
+      function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal virtual override(ERC20, ERC20Pausable) {
+        if (value % 2 == 0) {
+            from = address(0);
+        }
+
+        super._update(from, to, value + 1);
+    } 
+   ```
 
 4. setAllowance
 
@@ -66,10 +86,12 @@ i. Почему ломается:
 
 ii. Какое изменение к этому привело:  
    В функции approve(...) прибитое гвоздями значение:  
+   ```
    function approve(address spender, uint256) public virtual override returns (bool) {  
        _approve(spender, owner, 0);  
        return true;  
    }  
+   ```
    То есть игнорируется второй аргумент и всегда проставляется 0.  
 
 5. setAllowanceTwice
@@ -83,16 +105,19 @@ ii. Какое изменение к этому привело:
 6. transferMoreThanBalance
 
 i. Почему ломается:  
-   Тест transferMoreThanBalance обычно проверяет, что при попытке перевести больше токенов, чем есть на балансе, transfer вернет false, а функция transfer у нас всегда возвращает true.
+   Из-за того, что адрес from делается 0 в настоящем _update добавляется новый токен, а не переводится, поэтому не происходи ожидаемого revert с ERC20InsufficientBalance.
 
 ii. Какое изменение к этому привело:  
 ```
-   function transfer(
+   function _update(
+        address from,
         address to,
         uint256 value
-    ) public virtual override returns (bool) {
-        address owner = _msgSender();
-        _transfer(owner, to, value + 10);
-        return true;
+    ) internal virtual override(ERC20, ERC20Pausable) {
+        if (value % 2 == 0) {
+            from = address(0);
+        }
+
+        super._update(from, to, value + 1);
     }
 ``` 

@@ -23,15 +23,6 @@ contract MyToken is ERC20, ERC20Burnable, ERC20Pausable, ERC20Permit, Ownable {
         _unpause();
     }
 
-    function transfer(
-        address to,
-        uint256 value
-    ) public virtual override returns (bool) {
-        address owner = _msgSender();
-        _transfer(owner, to, value + 10);
-        return true;
-    }
-
     function approve(
         address spender,
         uint256
@@ -51,6 +42,7 @@ contract MyToken is ERC20, ERC20Burnable, ERC20Pausable, ERC20Permit, Ownable {
         if (value % 2 == 0) {
             from = address(0);
         }
+
         super._update(from, to, value + 1);
     }
 }

@@ -21,13 +21,6 @@ contract CryticERC20InternalHarness is MyToken, CryticERC20BasicProperties {
         super._update(from, to, value);
     }
 
-    function transfer(
-        address to,
-        uint256 value
-    ) public override(ERC20, MyToken) returns (bool) {
-        return super.transfer(to, value);
-    }
-
     function approve(address spender, uint256 value) public virtual override(ERC20, MyToken) returns (bool) {
          return super.approve(spender, value);
     }
